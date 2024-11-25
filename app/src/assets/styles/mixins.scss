@@ -1,0 +1,41 @@
+// flex布局
+@mixin flex($direction: row, $justify: flex-start, $align: stretch) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+}
+
+// 文本溢出省略
+@mixin text-ellipsis($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+// 响应式容器
+@mixin container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 $spacing-base;
+  
+  @media (min-width: $breakpoint-sm) {
+    max-width: 540px;
+  }
+  @media (min-width: $breakpoint-md) {
+    max-width: 720px;
+  }
+  @media (min-width: $breakpoint-lg) {
+    max-width: 960px;
+  }
+  @media (min-width: $breakpoint-xl) {
+    max-width: 1140px;
+  }
+} 

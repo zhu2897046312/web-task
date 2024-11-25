@@ -1,0 +1,18 @@
+server:
+  port: 8080
+  mode: debug
+
+database:
+  driver: mysql
+  host: "172.25.13.23"
+  port: 3306
+  username: "root"
+  password: "123"
+  dbname: "web"
+  charset: "utf8mb4"
+
+redis:
+  host: localhost
+  port: 6379
+  password: "0608"
+  db: 0 
