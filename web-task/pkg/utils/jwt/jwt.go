@@ -16,15 +16,17 @@ type Claims struct {
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
+	Role     string `json:"role"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken 生成JWT token
-func GenerateToken(userID uint, username, email string) (string, error) {
+func GenerateToken(userID uint, username, email, role string) (string, error) {
 	claims := Claims{
 		UserID:   userID,
 		Username: username,
 		Email:    email,
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // token有效期24小时
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

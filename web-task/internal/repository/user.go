@@ -192,4 +192,27 @@ func (r *UserRepository) UnsetDefaultAddresses(userID uint) error {
 	return r.db.Model(&models.Address{}).
 		Where("user_id = ?", userID).
 		Update("is_default", false).Error
+}
+
+func (r *UserRepository) ListUsers(page, pageSize int) ([]models.User, int64, error) {
+	var users []models.User
+	var total int64
+	
+	offset := (page - 1) * pageSize
+	
+	// 获取总数
+	if err := r.db.Model(&models.User{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	
+	// 获取分页数据
+	if err := r.db.Offset(offset).Limit(pageSize).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+	
+	return users, total, nil
+}
+
+func (r *UserRepository) UpdateUserByAdmin(user *models.User) error {
+	return r.db.Model(user).Updates(user).Error
 } 

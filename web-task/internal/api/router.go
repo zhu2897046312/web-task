@@ -30,13 +30,14 @@ func RegisterRoutes(r *gin.Engine, sf *service.ServiceFactory, db *gorm.DB) {
             public.GET("/products/:id", handlers.GetProduct)
             public.GET("/products/:id/reviews", handlers.GetProductReviews)
 
-            // 广告
+            // 公开的广告接口
             public.GET("/advertisements", handlers.GetActiveAdvertisements)
+            public.GET("/advertisements/position/:position", handlers.GetActiveAdvertisements)
         }
 
         // 需要认证的路由
         authorized := v1.Group("")
-        authorized.Use(middleware.AuthMiddleware()) // 添加认证中间件
+        authorized.Use(middleware.AuthMiddleware())
         {
             // 用户相关
             users := authorized.Group("/users")
@@ -53,6 +54,7 @@ func RegisterRoutes(r *gin.Engine, sf *service.ServiceFactory, db *gorm.DB) {
                 orders.POST("", handlers.CreateOrder)
                 orders.GET("", handlers.ListOrders)
                 orders.GET("/:id", handlers.GetOrder)
+                orders.GET("/:id/logistics", handlers.GetLogistics)
             }
 
             // 购物车相关
@@ -72,19 +74,31 @@ func RegisterRoutes(r *gin.Engine, sf *service.ServiceFactory, db *gorm.DB) {
                 reviews.DELETE("/:id", handlers.DeleteReview)
             }
 
-            // 需要认证的商品操作（如管理员操作）
-            products := authorized.Group("/products")
+            // 管理员路由组
+            admin := authorized.Group("/admin")
             {
-                products.POST("", handlers.CreateProduct)
-                products.PUT("/:id", handlers.UpdateProduct)
-                products.DELETE("/:id", handlers.DeleteProduct)
-            }
+                // 用户管理
+                admin.GET("/users", handlers.AdminListUsers)
+                admin.PUT("/users/:id", handlers.AdminUpdateUser)
+                admin.DELETE("/users/:id", handlers.AdminDeleteUser)
 
-            // 广告管理
-            ads := authorized.Group("/advertisements")
-            {
-                ads.POST("", handlers.CreateAdvertisement)
-                ads.PUT("/:id/status", handlers.UpdateAdvertisementStatus)
+                // 商品管理
+                admin.POST("/products", handlers.CreateProduct)
+                admin.PUT("/products/:id", handlers.UpdateProduct)
+                admin.DELETE("/products/:id", handlers.DeleteProduct)
+
+                // 订单管理
+                admin.GET("/orders", handlers.AdminListOrders)
+                admin.PUT("/orders/:id/status", handlers.UpdateOrderStatus)
+                admin.POST("/orders/:id/logistics", handlers.UpdateLogistics)
+
+                // 广告管理
+                admin.POST("/advertisements", handlers.CreateAdvertisement)
+                admin.GET("/advertisements", handlers.ListAdvertisements)
+                admin.GET("/advertisements/:id", handlers.GetAdvertisement)
+                admin.PUT("/advertisements/:id", handlers.UpdateAdvertisement)
+                admin.DELETE("/advertisements/:id", handlers.DeleteAdvertisement)
+                admin.PUT("/advertisements/:id/status", handlers.UpdateAdvertisementStatus)
             }
         }
     }

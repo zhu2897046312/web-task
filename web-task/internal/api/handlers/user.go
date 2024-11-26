@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"web-task/internal/models"
 	"web-task/internal/service"
 	"web-task/pkg/utils/response"
@@ -145,4 +146,98 @@ func ListUserAddresses(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.Success(addresses))
+}
+
+// AdminListUsers 管理员获取用户列表
+func AdminListUsers(c *gin.Context) {
+	// 检查是否是管理员
+	role, exists := c.Get("userRole")
+	if !exists || role.(string) != "admin" {
+		c.JSON(http.StatusForbidden, response.Error(403, "Permission denied"))
+		return
+	}
+
+	// 获取分页参数
+	page := c.DefaultQuery("page", "1")
+	pageSize := c.DefaultQuery("page_size", "10")
+	
+	pageNum, _ := strconv.Atoi(page)
+	pageSizeNum, _ := strconv.Atoi(pageSize)
+
+	svc := c.MustGet("userService").(*service.UserService)
+	users, total, err := svc.ListUsers(pageNum, pageSizeNum)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error(500, err.Error()))
+		return
+	}
+
+	// 清除敏感信息
+	for i := range users {
+		users[i].Password = ""
+		users[i].VerifyToken = ""
+	}
+
+	c.JSON(http.StatusOK, response.Success(gin.H{
+		"users": users,
+		"total": total,
+		"page": pageNum,
+		"page_size": pageSizeNum,
+	}))
+}
+
+// AdminUpdateUser 管理员更新用户信息
+func AdminUpdateUser(c *gin.Context) {
+	// 检查是否是管理员
+	role, exists := c.Get("userRole")
+	if !exists || role.(string) != "admin" {
+		c.JSON(http.StatusForbidden, response.Error(403, "Permission denied"))
+		return
+	}
+
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error(400, "Invalid user ID"))
+		return
+	}
+
+	var user models.User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, response.Error(400, "Invalid request parameters"))
+		return
+	}
+
+	user.ID = uint(userID)
+
+	svc := c.MustGet("userService").(*service.UserService)
+	if err := svc.UpdateUserByAdmin(&user); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error(500, err.Error()))
+		return
+	}
+
+	user.Password = ""
+	c.JSON(http.StatusOK, response.Success(user))
+}
+
+// AdminDeleteUser 管理员删除用户
+func AdminDeleteUser(c *gin.Context) {
+	// 检查是否是管理员
+	role, exists := c.Get("userRole")
+	if !exists || role.(string) != "admin" {
+		c.JSON(http.StatusForbidden, response.Error(403, "Permission denied"))
+		return
+	}
+
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error(400, "Invalid user ID"))
+		return
+	}
+
+	svc := c.MustGet("userService").(*service.UserService)
+	if err := svc.DeleteUser(uint(userID)); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error(500, err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success(nil))
 } 

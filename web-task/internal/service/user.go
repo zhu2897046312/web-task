@@ -59,8 +59,8 @@ func (s *UserService) Login(email, password string) (*LoginResponse, error) {
 		return nil, ErrInvalidAuth
 	}
 
-	// 生成JWT token
-	token, err := jwt.GenerateToken(user.ID, user.Nickname, user.Email)
+	// 生成JWT token,添加角色信息
+	token, err := jwt.GenerateToken(user.ID, user.Nickname, user.Email, user.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +82,8 @@ func (s *UserService) LoginByUsername(username, password string) (*LoginResponse
 		return nil, ErrInvalidAuth
 	}
 
-	// 生成JWT token
-	token, err := jwt.GenerateToken(user.ID, user.Nickname, user.Email)
+	// 生成JWT token,添加角色信息
+	token, err := jwt.GenerateToken(user.ID, user.Nickname, user.Email, user.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -143,4 +143,27 @@ func (s *UserService) AddAddress(address *models.Address) error {
 
 func (s *UserService) ListAddresses(userID uint) ([]models.Address, error) {
 	return s.repoFactory.GetUserRepository().ListAddresses(userID)
+}
+
+// ListUsers 获取用户列表(仅管理员)
+func (s *UserService) ListUsers(page, pageSize int) ([]models.User, int64, error) {
+	return s.repoFactory.GetUserRepository().ListUsers(page, pageSize)
+}
+
+// UpdateUserByAdmin 管理员更新用户信息
+func (s *UserService) UpdateUserByAdmin(user *models.User) error {
+	// 如果更新了密码，需要加密
+	if user.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		user.Password = string(hashedPassword)
+	}
+	return s.repoFactory.GetUserRepository().UpdateUserByAdmin(user)
+}
+
+// DeleteUser 删除用户(仅管理员)
+func (s *UserService) DeleteUser(userID uint) error {
+	return s.repoFactory.GetUserRepository().SoftDelete(userID)
 } 
