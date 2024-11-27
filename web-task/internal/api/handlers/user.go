@@ -82,24 +82,39 @@ func UpdateUserProfile(c *gin.Context) {
 		return
 	}
 
-	var user models.User
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var updateData struct {
+		Nickname string `json:"nickname"`
+		Avatar   string `json:"avatar"`
+	}
+
+	if err := c.ShouldBindJSON(&updateData); err != nil {
 		c.JSON(http.StatusBadRequest, response.Error(400, "Invalid request parameters"))
 		return
 	}
 
-	// 确保只能更新自己的信息
-	user.ID = userID.(uint)
+	// 创建用户对象，只包含要更新的字段
+	user := &models.User{
+		ID:       userID.(uint),
+		Nickname: updateData.Nickname,
+		Avatar:   updateData.Avatar,
+	}
 
 	svc := c.MustGet("userService").(*service.UserService)
-	if err := svc.UpdateUser(&user); err != nil {
+	if err := svc.UpdateUser(user); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error(500, err.Error()))
+		return
+	}
+
+	// 获取更新后的用户信息
+	updatedUser, err := svc.GetUserByID(userID.(uint))
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Error(500, err.Error()))
 		return
 	}
 
 	// 清除敏感信息
-	user.Password = ""
-	c.JSON(http.StatusOK, response.Success(user))
+	updatedUser.Password = ""
+	c.JSON(http.StatusOK, response.Success(updatedUser))
 }
 
 // AddUserAddress 添加用户地址

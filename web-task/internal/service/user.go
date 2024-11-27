@@ -104,16 +104,19 @@ func (s *UserService) GetUserByID(id uint) (*models.User, error) {
 	return s.repoFactory.GetUserRepository().GetByID(id)
 }
 
+// UpdateUser 更新用户信息
 func (s *UserService) UpdateUser(user *models.User) error {
 	// 如果更新了密码，需要加密
 	if user.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-		if err != nil {
-			return err
-		}
-		user.Password = string(hashedPassword)
+		 hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		 if err != nil {
+			 return err
+		 }
+		 user.Password = string(hashedPassword)
 	}
-	return s.repoFactory.GetUserRepository().Update(user)
+	
+	// 调用 repository 的 UpdateProfile 方法
+	return s.repoFactory.GetUserRepository().UpdateProfile(user)
 }
 
 func (s *UserService) AddAddress(address *models.Address) error {

@@ -43,7 +43,12 @@ func (r *UserRepository) GetByID(id uint) (*models.User, error) {
 }
 
 func (r *UserRepository) UpdateProfile(user *models.User) error {
-	return r.db.Model(user).Select("nickname", "avatar").Updates(user).Error
+	return r.db.Model(user).
+		Select("nickname", "avatar").
+		Updates(map[string]interface{}{
+			"nickname": user.Nickname,
+			"avatar":   user.Avatar,
+		}).Error
 }
 
 func (r *UserRepository) UpdatePassword(userID uint, hashedPassword string) error {
